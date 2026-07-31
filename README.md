@@ -19,7 +19,6 @@
 - [Environment Variables](#environment-variables)
 - [Installation & Setup](#installation--setup)
 - [Running the Project](#running-the-project)
-- [License](#license)
 
 ---
 
@@ -27,7 +26,7 @@
 
 **PatentPilot** is an end-to-end patent intelligence and molecular screening platform designed for medicinal chemists, IP researchers, and biotech innovators. 
 
-By taking a **SMILES chemical structure**, a **detailed molecule description**, and optional biological targets, PatentPilot automatically fetches molecular metadata from PubChem, searches public patent databases (SureChEMBL), runs multi-vector LLM semantic ranking using Groq, renders an interactive ReactFlow relationship graph, and generates structured IP patentability reports.
+By taking a **SMILES chemical structure**, a **detailed molecule description**, and optional biological targets, PatentPilot automatically fetches molecular metadata from PubChem, searches public patent databases (SureChEMBL), runs multi-vector LLM semantic ranking using Featherless AI, renders an interactive ReactFlow relationship graph, and generates structured IP patentability reports.
 
 ---
 
@@ -37,7 +36,7 @@ By taking a **SMILES chemical structure**, a **detailed molecule description**, 
 - **Supabase Authentication**: Domain-restricted institutional sign-in (`@vnrvjiet.in`) with persistent user sessions.
 - **PubChem Metadata Integration**: Automatic retrieval of CID, IUPAC Name, Molecular Formula, Molecular Weight, 2D structures, and synonyms.
 - **Hybrid SureChEMBL Patent Search**: Synonym-expanded multi-keyword API query fetching real patent documents.
-- **AI Semantic Patent Ranking**: Groq LLM evaluates chemical similarity, target overlap, and prior art risk.
+- **AI Semantic Patent Ranking**: Featherless AI LLM evaluates chemical similarity, target overlap, and prior art risk.
 - **5 Core AI Patent Categories**: Detailed breakdown for *Composition of Matter*, *Process/Manufacturing*, *Formulation*, *Drug Delivery*, and *New Therapeutic Indication*.
 - **Interactive Patent Relationship Graph**: ReactFlow node-edge mapping displaying innovation-to-patent and patent-to-patent citation/overlap connections.
 - **Integrated Drug Screening Dashboard**: Calculates Lipinski Rule of Five compliance, molecular descriptors (TPSA, LogP, HBD, HBA, Rotatable Bonds), and ADME pharmacokinetic predictions.
@@ -48,38 +47,8 @@ By taking a **SMILES chemical structure**, a **detailed molecule description**, 
 
 ## System Architecture
 
-```
-                                  User Input
-                   (SMILES, Context, Target, Disease)
-                                       │
-                                       ▼
-                             Next.js Frontend (App Router)
-                                       │
-                                       ▼
-                              POST /api/analyze Route
-                                       │
-                   ┌───────────────────┴───────────────────┐
-                   ▼                                       ▼
-            PubChem REST API                       SureChEMBL Patent API
-         (CID, Formula, Synonyms)                 (Prior Art Search Query)
-                   │                                       │
-                   └───────────────────┬───────────────────┘
-                                       ▼
-                              Groq LLM Pipeline
-                    (Semantic Ranking & Classification)
-                                       │
-                   ┌───────────────────┼───────────────────┐
-                   ▼                   ▼                   ▼
-           5 IP Categories      Patentability      Interactive Graph
-           Classification          Report              (ReactFlow)
-                   │                   │                   │
-                   └───────────────────┼───────────────────┘
-                                       ▼
-                           Supabase Database (PostgreSQL)
-                                       │
-                                       ▼
-                       Analysis Detail & Saved History
-```
+<img width="622" height="610" alt="image" src="https://github.com/user-attachments/assets/9103fe0b-7533-417f-9ca8-306dc5b2a213" />
+
 
 ---
 
@@ -90,7 +59,7 @@ Users authenticate via Supabase Auth (with `@vnrvjiet.in` institutional domain v
 - **SMILES String** (*Mandatory*)
 - **Molecule Description & Context** (*Mandatory*)
 - **Biological Target** (*Optional*)
-- **Disease Indication** (*Optional*)
+- **Disease** (*Optional*)
 
 ### 2. Molecular Retrieval (PubChem API)
 The system queries PubChem to fetch canonical SMILES, Molecular Formula, Molecular Weight, PubChem CID, and structural synonyms.
@@ -99,18 +68,18 @@ The system queries PubChem to fetch canonical SMILES, Molecular Formula, Molecul
 PatentPilot expands the search query using synonyms derived from PubChem, executing a multi-keyword query on SureChEMBL to pull candidates.
 
 ### 4. AI Semantic Ranking & Patentability Evaluation
-The Groq LLM processes retrieved patent abstracts against candidate molecule details to:
+The Featherless AI LLM processes retrieved patent abstracts against candidate molecule details to:
 - Select the top **5 most relevant patents**.
 - Calculate individual relevance scores (0-100%) and confidence ratings.
 - Categorize prior-art risks.
 
 ### 5. Interactive Relationship Graph Generation
 Generates a workflow graph mapping the user's innovation to the top 5 patent nodes, highlighting connections such as:
-- **High Relevance Match** (`#10b981`)
-- **AI Semantic Match** (`#06b6d4`)
-- **Shared Assignee** (`#8b5cf6`)
-- **Same Patent Type** (`#f59e0b`)
-- **Overlapping Terms** (`#ec4899`)
+- **High Relevance Match**
+- **AI Semantic Match** 
+- **Shared Assignee** 
+- **Same Patent Type** 
+- **Overlapping Terms** 
 
 ### 6. Comprehensive Report & Storage
 Generates a structured report with overall patentability score, risk classification (*Low Patent Risk*, *Requires Expert Review*, *High Patent Risk*), and saves the analysis into Supabase for future retrieval.
@@ -154,6 +123,20 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 
 ---
 
+---
+## Application Preview
+
+<img width="1600" height="888" alt="image" src="https://github.com/user-attachments/assets/552cce28-8080-4e2a-93e8-ecf3d956d354" />
+<img width="2560" height="1436" alt="image" src="https://github.com/user-attachments/assets/8dd30ce8-32c4-4bdd-9f76-a99a42016ddf" />
+<img width="1600" height="791" alt="image" src="https://github.com/user-attachments/assets/f348aade-655c-451a-9dd1-d9def5786b44" />
+<img width="1600" height="844" alt="image" src="https://github.com/user-attachments/assets/fd79a913-b478-488d-aaf6-0a9caaf6851d" />
+<img width="1600" height="1234" alt="image" src="https://github.com/user-attachments/assets/5c35688f-376a-458b-ab9d-eb845bb685d0" />
+<img width="1070" height="1338" alt="image" src="https://github.com/user-attachments/assets/d85ad3f8-0f3e-4bdc-90da-c2add4ae1c09" />
+<img width="1600" height="795" alt="image" src="https://github.com/user-attachments/assets/0607fc4e-921a-4fdf-96fe-1c0febe90a15" />
+<img width="1281" height="928" alt="image" src="https://github.com/user-attachments/assets/9f8900f6-c0be-4096-906c-f67ebabf9fad" />
+
+---
+
 ## Technologies Used
 
 ### Frontend & UI
@@ -165,7 +148,7 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 - **Lucide React** (Modern clean SVG icons)
 
 ### AI & Backend APIs
-- **Groq SDK** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`)
+- **Featherless AI SDK** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`)
 - **PubChem PUG REST API**
 - **SureChEMBL REST API**
 
@@ -267,8 +250,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/sreenavyach15/PatentPilot.git
-   cd PatentPilot
+   https://github.com/SaiSrineeth/PatentPilot---AI_Powered_Patent_Intelligence
    ```
 
 2. **Install Dependencies**:
@@ -277,7 +259,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
 
 3. **Configure Environment**:
-   Copy `.env.example` to `.env.local` and add your `GROQ_API_KEY` and Supabase keys.
+   Copy `.env.example` to `.env.local` and add your `FEATHERLESS_API_KEY` and Supabase keys.
 
 4. **Initialize Database**:
    Run `schema.sql` in your Supabase SQL Editor.
@@ -299,7 +281,3 @@ npm start
 ```
 
 ---
-
-## License
-
-Distributed under the MIT License. See `LICENSE` for details.
