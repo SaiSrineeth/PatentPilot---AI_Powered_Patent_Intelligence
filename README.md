@@ -1,540 +1,298 @@
-# 🧪 PatentPilot
+# PatentPilot — AI-Assisted Patentability & Molecular Intelligence Platform
 
-> **AI-Assisted Patentability Assessment for Chemical Compounds**
-
-PatentPilot is an intelligent patent search and analysis platform that helps researchers, students, and innovators perform an initial patentability assessment for chemical compounds.
-
-Given a **SMILES string** (and optionally a biological target and disease), PatentPilot retrieves compound information, searches relevant patents from public patent databases, ranks the retrieved patents using AI-assisted analysis, and generates a comprehensive patentability report.
+> **Comprehensive Prior Art Patentability Assessment, Relationship Mapping & Drug Screening for Novel Chemical Compounds**
 
 ---
 
-# ✨ Features
+## Table of Contents
 
-- 🔬 Analyze compounds using SMILES notation
-- 🧪 Retrieve molecular information from PubChem
-- 📄 Search patents from SureChEMBL
-- 🤖 AI-powered patent relevance analysis
-- 📊 Patentability scoring and recommendation
-- 📝 AI-generated patentability report
-- 📚 Analysis history with search and sorting
-- 🔍 Previous similar analysis detection
-- 📥 Download patentability report
-- 🎨 Modern responsive user interface
-
----
-
-# 📖 Table of Contents
-
-- Overview
-- System Architecture
-- Project Workflow
-- Retrieval Strategy
-- AI Workflow
-- Technologies Used
-- Patent Ranking Methodology
-- Assumptions
-- Trade-offs
-- Future Improvements
-- Project Structure
-- Environment Variables
-- Installation
-- Running the Project
-- Screenshots
-- License
+- [Overview](#overview)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Complete Project Workflow](#complete-project-workflow)
+- [Interactive Patent Relationship Graph](#interactive-patent-relationship-graph)
+- [AI Analysis Categories](#ai-analysis-categories)
+- [Integrated Drug Screening Dashboard](#integrated-drug-screening-dashboard)
+- [Technologies Used](#technologies-used)
+- [Project Structure](#project-structure)
+- [Database Schema (Supabase)](#database-schema-supabase)
+- [Environment Variables](#environment-variables)
+- [Installation & Setup](#installation--setup)
+- [Running the Project](#running-the-project)
+- [License](#license)
 
 ---
 
-# 📌 Overview
+## Overview
 
-PatentPilot performs an end-to-end patentability assessment pipeline consisting of:
+**PatentPilot** is an end-to-end patent intelligence and molecular screening platform designed for medicinal chemists, IP researchers, and biotech innovators. 
 
-1. Compound validation
-2. Molecular information retrieval
-3. Patent retrieval
-4. AI-assisted patent ranking
-5. Patentability report generation
-6. Historical analysis storage
-
-Instead of merely displaying search results, PatentPilot intelligently ranks patents based on their relevance to the submitted compound and provides a structured patentability assessment.
+By taking a **SMILES chemical structure**, a **detailed molecule description**, and optional biological targets, PatentPilot automatically fetches molecular metadata from PubChem, searches public patent databases (SureChEMBL), runs multi-vector LLM semantic ranking using Groq, renders an interactive ReactFlow relationship graph, and generates structured IP patentability reports.
 
 ---
 
-# 🏗 Overall Architecture
+## Key Features
+
+- **SMILES & Context Input**: Molecule SMILES string and mandatory description validation.
+- **Supabase Authentication**: Domain-restricted institutional sign-in (`@vnrvjiet.in`) with persistent user sessions.
+- **PubChem Metadata Integration**: Automatic retrieval of CID, IUPAC Name, Molecular Formula, Molecular Weight, 2D structures, and synonyms.
+- **Hybrid SureChEMBL Patent Search**: Synonym-expanded multi-keyword API query fetching real patent documents.
+- **AI Semantic Patent Ranking**: Groq LLM evaluates chemical similarity, target overlap, and prior art risk.
+- **5 Core AI Patent Categories**: Detailed breakdown for *Composition of Matter*, *Process/Manufacturing*, *Formulation*, *Drug Delivery*, and *New Therapeutic Indication*.
+- **Interactive Patent Relationship Graph**: ReactFlow node-edge mapping displaying innovation-to-patent and patent-to-patent citation/overlap connections.
+- **Integrated Drug Screening Dashboard**: Calculates Lipinski Rule of Five compliance, molecular descriptors (TPSA, LogP, HBD, HBA, Rotatable Bonds), and ADME pharmacokinetic predictions.
+- **Dark & Light Mode Support**: Modern glassmorphic dark and light user interface.
+- **Analysis History & Re-visit**: Full Supabase database storage with instant search, sorting, and fallback graph rendering.
+
+---
+
+## System Architecture
 
 ```
-                    User
-                      │
-                      ▼
-              Next.js Frontend
-                      │
-                      ▼
-              /api/analyze Route
-                      │
-                      ▼
-             Analysis Pipeline
-                      │
-     ┌────────────────┼────────────────┐
-     ▼                ▼                ▼
- PubChem API     SureChEMBL API     Groq LLM
-     │                │                │
- Compound Info    Patent Search   AI Analysis
-     └────────────────┼────────────────┘
-                      ▼
-          Patentability Assessment
-                      │
-                      ▼
-             Supabase Database
-                      │
-                      ▼
-          Analysis History & Reports
+                                  User Input
+                   (SMILES, Context, Target, Disease)
+                                       │
+                                       ▼
+                             Next.js Frontend (App Router)
+                                       │
+                                       ▼
+                              POST /api/analyze Route
+                                       │
+                   ┌───────────────────┴───────────────────┐
+                   ▼                                       ▼
+            PubChem REST API                       SureChEMBL Patent API
+         (CID, Formula, Synonyms)                 (Prior Art Search Query)
+                   │                                       │
+                   └───────────────────┬───────────────────┘
+                                       ▼
+                              Groq LLM Pipeline
+                    (Semantic Ranking & Classification)
+                                       │
+                   ┌───────────────────┼───────────────────┐
+                   ▼                   ▼                   ▼
+           5 IP Categories      Patentability      Interactive Graph
+           Classification          Report              (ReactFlow)
+                   │                   │                   │
+                   └───────────────────┼───────────────────┘
+                                       ▼
+                           Supabase Database (PostgreSQL)
+                                       │
+                                       ▼
+                       Analysis Detail & Saved History
 ```
 
 ---
 
-# 🔄 Project Workflow
+## Complete Project Workflow
 
-![alt text](<workflow.png>)
+### 1. Authentication & Input Validation
+Users authenticate via Supabase Auth (with `@vnrvjiet.in` institutional domain validation). Upon signing in, users enter:
+- **SMILES String** (*Mandatory*)
+- **Molecule Description & Context** (*Mandatory*)
+- **Biological Target** (*Optional*)
+- **Disease Indication** (*Optional*)
 
-## Step 1 — User Input
+### 2. Molecular Retrieval (PubChem API)
+The system queries PubChem to fetch canonical SMILES, Molecular Formula, Molecular Weight, PubChem CID, and structural synonyms.
 
-The user provides:
+### 3. Patent Retrieval (SureChEMBL API)
+PatentPilot expands the search query using synonyms derived from PubChem, executing a multi-keyword query on SureChEMBL to pull candidates.
 
-- SMILES string (**required**)
-- Target (optional)
-- Disease (optional)
+### 4. AI Semantic Ranking & Patentability Evaluation
+The Groq LLM processes retrieved patent abstracts against candidate molecule details to:
+- Select the top **5 most relevant patents**.
+- Calculate individual relevance scores (0-100%) and confidence ratings.
+- Categorize prior-art risks.
+
+### 5. Interactive Relationship Graph Generation
+Generates a workflow graph mapping the user's innovation to the top 5 patent nodes, highlighting connections such as:
+- **High Relevance Match** (`#10b981`)
+- **AI Semantic Match** (`#06b6d4`)
+- **Shared Assignee** (`#8b5cf6`)
+- **Same Patent Type** (`#f59e0b`)
+- **Overlapping Terms** (`#ec4899`)
+
+### 6. Comprehensive Report & Storage
+Generates a structured report with overall patentability score, risk classification (*Low Patent Risk*, *Requires Expert Review*, *High Patent Risk*), and saves the analysis into Supabase for future retrieval.
 
 ---
 
-## Step 2 — Compound Retrieval
+## Interactive Patent Relationship Graph
 
-PatentPilot queries the **PubChem REST API** to retrieve:
+Positioned directly above the Patentability Report, the **Patent Workflow Graph** allows researchers to visually inspect patent relationships:
 
-- Compound Name
-- CID
-- Molecular Formula
-- Canonical SMILES
-- Synonyms
+- **Central Innovation Node**: Displays your candidate compound name, formula, and SMILES.
+- **Top Ranked Patent Nodes**: Displays patent numbers, publication dates, titles, and similarity percentages.
+- **Edge Click Inspection**: Clicking any edge opens a detail panel with AI explanations for the relationship.
+- **Direct Navigation**: Includes a **"View Relationships"** button in the patent section header to scroll to the graph.
 
 ---
 
-## Step 3 — Patent Search
+## AI Analysis Categories
 
-Relevant search keywords are extracted from:
+The AI patentability evaluation explicitly categorizes prior art overlap across five key pharmaceutical domain areas:
 
-- Compound name
-- Molecular synonyms
+1. **Composition of Matter**: Evaluation of core molecular scaffolds, chemical structures, and active pharmaceutical ingredients (APIs).
+2. **Process / Manufacturing**: Syntheses, reaction steps, reagents, purification procedures, and scalable production methods.
+3. **Formulation**: Excipient combinations, salt forms, polymorphs, stability enhancers, and dosage form compositions.
+4. **Drug Delivery**: Extended-release systems, nanoparticles, liposomal carriers, targeted delivery, and bioavailability enhancements.
+5. **New Therapeutic Indication**: Novel disease applications, secondary mechanism of action uses, and repurposed clinical utility.
 
-These keywords are combined into a hybrid search query which is sent to the **SureChEMBL API**.
+---
 
-Example:
+## Integrated Drug Screening Dashboard
+
+Accessible via `/drug-screening`, this tool provides early-stage drug-likeness evaluation:
+
+- **Molecular Descriptors**: Molecular Weight (g/mol), LogP (Lipophilicity), H-Bond Donors, H-Bond Acceptors, Rotatable Bonds, TPSA (Å²), Aromatic Rings.
+- **Lipinski Rule of Five**: Evaluates MW ≤ 500, LogP ≤ 5, HBD ≤ 5, HBA ≤ 10, returning an overall **PASS / FAIL** verdict.
+- **ADME Predictions**:
+  - **Absorption**: Gastrointestinal permeability prediction.
+  - **Distribution**: Plasma protein binding and tissue distribution.
+  - **Metabolism**: CYP450 metabolic stability.
+  - **Excretion**: Renal & hepatic clearance route.
+
+---
+
+## Technologies Used
+
+### Frontend & UI
+- **Next.js 15+ (App Router)**
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS**
+- **ReactFlow** (Interactive graph rendering)
+- **Lucide React** (Modern clean SVG icons)
+
+### AI & Backend APIs
+- **Groq SDK** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`)
+- **PubChem PUG REST API**
+- **SureChEMBL REST API**
+
+### Database & Auth
+- **Supabase** (PostgreSQL database, Row Level Security, Supabase Auth)
+
+---
+
+## Project Structure
 
 ```
-Compound:
-Aspirin
-
-Keywords:
-aspirin
-acetylsalicylic acid
-
-Search Query:
-aspirin acetylsalicylic acid
-```
-
----
-
-## Step 4 — Patent Ranking
-
-Retrieved patents are analyzed using an AI model.
-
-For every patent the AI evaluates:
-
-- Chemical similarity
-- Therapeutic overlap
-- Target relevance
-- Disease relevance
-- Patent context
-
-Each patent receives:
-
-- Relevance Score
-- Confidence Score
-- AI Explanation
-
----
-
-## Step 5 — Patentability Assessment
-
-PatentPilot computes an overall risk score using the aggregated patent analysis.
-
-Recommendations include:
-
-- 🟢 Low Patent Risk
-- 🟡 Requires Expert Review
-- 🔴 High Patent Risk
-
----
-
-## Step 6 — Report Generation
-
-An AI-generated patentability report summarizes:
-
-- Compound information
-- Relevant patents
-- AI reasoning
-- Patent landscape
-- Final recommendation
-
-The report can also be downloaded.
-
----
-
-## Step 7 — History Storage
-
-Each completed analysis is stored in Supabase.
-
-Users can later:
-
-- Search previous analyses
-- Sort history
-- Reopen reports
-- Detect previously analyzed compounds
-
----
-
-# 🔍 Retrieval Strategy
-
-PatentPilot uses a **Hybrid Keyword-Based Retrieval Strategy**.
-
-Instead of relying on a single keyword, the system expands the search using:
-
-- Compound name
-- Molecular synonyms obtained from PubChem
-
-The resulting keywords are combined into a single search query and submitted to SureChEMBL.
-
-Example:
-
-```
-Warfarin
-Coumafene
-
-↓
-
-warfarin Coumafene
-```
-
-This approach improves recall compared to using only the primary compound name while keeping the implementation lightweight and explainable.
-
----
-
-# 🤖 AI Workflow
-
-After patents are retrieved:
-
-For each patent:
-
-1. Patent metadata is extracted
-2. Abstract is processed
-3. Compound information is provided
-4. Optional target and disease are included
-5. AI evaluates patent relevance
-
-The AI generates:
-
-- Relevance Score
-- Confidence Score
-- Detailed explanation
-- Chemical overlap
-- Therapeutic overlap
-- Risk assessment
-
-Finally, the AI generates an overall patentability report using the combined patent analyses.
-
----
-
-# 📊 Patent Ranking Methodology
-
-PatentPilot does **not** simply display retrieved patents.
-
-Instead, each patent is evaluated using:
-
-- Compound similarity
-- Synonym matching
-- Patent abstract analysis
-- Target overlap (if provided)
-- Disease overlap (if provided)
-- AI reasoning
-
-The overall patentability score is calculated using aggregated relevance and confidence values across the retrieved patents.
-
----
-
-# 🛠 Technologies Used
-
-## Frontend
-
-- Next.js 15 (App Router)
-- React
-- TypeScript
-- Tailwind CSS
-
----
-
-## Backend
-
-- Next.js API Routes
-- TypeScript
-
----
-
-## Database
-
-- Supabase
-
-Supabase, powered by **PostgreSQL**, is used as the backend database for storing and managing:
-
-- Analysis history
-- Patentability reports
-- Compound metadata
-- Analysis timestamps
-
-It enables efficient storage, retrieval, filtering, and sorting of previous analyses.
-
----
-
-## External APIs
-
-### PubChem
-
-Retrieves:
-
-- Compound information
-- Synonyms
-- Molecular properties
-
----
-
-### SureChEMBL
-
-Retrieves:
-
-- Patent metadata
-- Patent abstracts
-
----
-
-### Groq LLM
-
-Used for:
-
-- Patent explanation
-- Patent ranking
-- Patentability report generation
-
----
-
-# 📁 Project Structure
-
-```
-PatentPilot
-│
+PatentPilot/
 ├── app/
 │   ├── api/
-│   ├── history/
-│   ├── report/
-│   └── page.tsx
-│
+│   │   ├── analyze/          # POST endpoint for full analysis pipeline
+│   │   ├── history/          # GET endpoints for saved analyses
+│   │   └── report/           # Export report endpoint
+│   ├── auth/                 # Sign-in & signup page with domain validation
+│   ├── drug-screening/       # Drug screening & ADME dashboard page
+│   ├── history/              # History listing and detail pages
+│   │   └── [id]/             # Saved analysis report & graph view
+│   ├── PatentWorkflowGraph.tsx # ReactFlow relationship graph component
+│   ├── page.tsx              # Main patentability assessment interface
+│   ├── layout.tsx            # Global layout with font providers
+│   └── globals.css           # Custom CSS utilities & glassmorphism styles
 ├── core/
-│   ├── analysisPipeline.ts
-│   ├── patentAnalyzer.ts
-│   └── reportGenerator.ts
-│
+│   └── analysisPipeline.ts   # Core pipeline orchestrator & graph builder
 ├── lib/
-│
+│   ├── chemistry.ts          # Pure JS Lipinski & ADME calculators
+│   └── supabase.ts           # Supabase client instantiation
 ├── services/
-│
-├── public/
-│
+│   ├── groq.ts               # Groq LLM client & ranking prompt handlers
+│   ├── history.ts            # Supabase database persistence service
+│   ├── pubchem.ts            # PubChem compound retrieval service
+│   ├── report.ts             # Groq report generator service
+│   └── surechembl.ts         # SureChEMBL patent search service
 ├── types/
-│
-├── .env.example
+│   └── analysis.ts           # TypeScript interfaces & data models
+├── schema.sql                # Supabase PostgreSQL schema script
 ├── package.json
 └── README.md
 ```
 
 ---
 
-# 💡 Assumptions Made
+## Database Schema (Supabase)
 
-- The submitted SMILES string represents a valid chemical structure.
-- PubChem contains information for the submitted compound.
-- SureChEMBL returns patents relevant to the generated keyword query.
-- Patent abstracts provide sufficient context for AI evaluation.
-- Optional target and disease information improve relevance but are not mandatory.
+Execute the following script in the Supabase SQL Editor:
 
----
+```sql
+CREATE TABLE IF NOT EXISTS analyses (
+  id UUID PRIMARY KEY DEFAULT gen_random_state(),
+  smiles TEXT NOT NULL,
+  target TEXT,
+  disease TEXT,
+  compound_name TEXT NOT NULL,
+  pubchem_cid INTEGER,
+  molecular_formula TEXT,
+  report JSONB NOT NULL,
+  user_email TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-# ⚖ Trade-offs
+CREATE TABLE IF NOT EXISTS patents (
+  id UUID PRIMARY KEY DEFAULT gen_random_state(),
+  analysis_id UUID REFERENCES analyses(id) ON DELETE CASCADE,
+  patent_number TEXT NOT NULL,
+  title TEXT,
+  publication_date TEXT,
+  assignee TEXT,
+  abstract TEXT,
+  relevance_score INTEGER,
+  ai_explanation TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-## Hybrid Keyword Retrieval
-
-Pros:
-
-- Simple
-- Explainable
-- Fast
-- Works well with public APIs
-
-Cons:
-
-- May miss patents using uncommon terminology.
-
----
-
-## AI-Based Patent Ranking
-
-Pros:
-
-- Better contextual understanding
-- Human-readable explanations
-- More meaningful ranking
-
-Cons:
-
-- Depends on LLM quality.
-- Subject to API rate limits.
-
----
-
-## Public Patent Databases
-
-Pros:
-
-- Free
-- Accessible
-- Easy integration
-
-Cons:
-
-- Coverage may differ from commercial patent databases.
-
----
-
-# 🚀 Future Improvements
-
-- Semantic patent retrieval using embeddings
-- Molecular fingerprint similarity search
-- Vector database integration
-- Multi-database patent search
-- Interactive patent comparison
-- PDF export with charts
-- User authentication
-- Saved projects and collections
-- Batch compound analysis
-- Citation graph visualization
-- AI confidence calibration
-- Real-time analysis progress updates
-- Patent family clustering
-- Prior-art timeline visualization
-
-
----
-
-
-# ⚙ Installation
-
-Clone the repository
-
-```bash
-git clone https://github.com/sreenavyach15/PatentPilot.git
-```
-
-Go into the project
-
-```bash
-cd patentpilot
-```
-
-Install dependencies
-
-```bash
-npm install
+CREATE INDEX IF NOT EXISTS idx_analyses_smiles ON analyses(smiles);
+CREATE INDEX IF NOT EXISTS idx_patents_analysis_id ON patents(analysis_id);
 ```
 
 ---
 
-## Database Setup
+## Environment Variables
 
-1. Create a new **Supabase** project.
-
-2. Open the **SQL Editor** from the left sidebar.
-
-3. Execute the SQL script located at:
-
-```text
-database/schema.sql
-```
-
-This creates all the required tables, indexes, and relationships used by PatentPilot.
-
-4. Obtain your **Project URL**.
-
-- Go to the **Project Dashboard**.
-- Click **Copy** next to the Project URL (or **Get Connected → Project URL**).
-
-Example:
-
-```text
-https://your-project-id.supabase.co
-```
-
-5. Obtain your **Anon Public Key**.
-
-- Go to **Project Settings** on left bar → **API Keys**.
-- Under **Legacy anon, service_role API keys**, copy the **anon public** key.
-
-Example:
-
-```text
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-6. Copy the generated URL and anon key into .env.local
-
----
-
-# 🔑 Environment Variables
-
-Create a `.env.local` file in the project root.
+Create a `.env.local` file in the root directory:
 
 ```env
-GROQ_API_KEY=your_groq_api_key
+# Groq API Credentials
+GROQ_API_KEY=gsk_your_groq_api_key_here
 
+# Supabase Database Credentials
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_public_key
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
-
-See `.env.example` for the required variables.
 
 ---
 
-# ▶ Running the Project
+## Installation & Setup
 
-Start the development server:
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/sreenavyach15/PatentPilot.git
+   cd PatentPilot
+   ```
 
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment**:
+   Copy `.env.example` to `.env.local` and add your `GROQ_API_KEY` and Supabase keys.
+
+4. **Initialize Database**:
+   Run `schema.sql` in your Supabase SQL Editor.
+
+---
+
+## Running the Project
+
+### Development Server
 ```bash
 npm run dev
 ```
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Open:
-
-```text
-http://localhost:3000
-```
-
-To build for production:
-
+### Production Build
 ```bash
 npm run build
 npm start
@@ -542,37 +300,6 @@ npm start
 
 ---
 
-# 📸 Screenshots
+## License
 
-<p align="center">Home Page</p>
-
-![alt text](homepage.png)
-
-<p align="center">Extracting info</p>
-
-![alt text](info-extraction.png)
-
-<p align="center">Compound Information</p>
-
-![alt text](compound-info.png)
-
-<p align="center">Related Patents</p>
-
-![alt text](patent1.png)
-
-![alt text](patent2.png)
-
-<p align="center">Patentability Report</p>
-
-![alt text](report1.png)
-
-![alt text](report2.png)
-
-<p align="center">Analysis History</p>
-
-![alt text](analysis-history.png)
-
-<p align="center">History of compound analysed previously</p>
-
-![alt text](analyzed-compound.png)
-
+Distributed under the MIT License. See `LICENSE` for details.
