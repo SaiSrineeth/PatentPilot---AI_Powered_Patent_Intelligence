@@ -1,6 +1,6 @@
 # PatentPilot — AI-Assisted Patentability & Molecular Intelligence Platform
 
-> **Comprehensive Prior Art Patentability Assessment, Relationship Mapping & Drug Screening for Novel Chemical Compounds**
+> **A comprehensive platform for evaluating novel chemical compounds by analyzing prior art, assessing patentability, and identifying potential patent conflicts.It helps researchers understand how a new compound is connected to existing patents, diseases, and biological targets, while evaluating its potential as a drug.**
 
 ---
 
@@ -43,6 +43,17 @@ By taking a **SMILES chemical structure**, a **detailed molecule description**, 
 - **Dark & Light Mode Support**: Modern glassmorphic dark and light user interface.
 - **Analysis History & Re-visit**: Full Supabase database storage with instant search, sorting, and fallback graph rendering.
 - **Download as PDF Reports**: Export comprehensive patent analysis reports, including AI insights and patent search results for documentation and sharing.
+
+---
+
+## Performance optimizations
+
+The implementation includes a few practical optimizations:
+
+- Patent family deduplication reduces duplicate records from public patent feeds.
+- The AI candidate set is capped to a manageable number of patents before deeper analysis.
+- The graph generation uses only the top-ranked patents for display.
+- History reads are straightforward and page-based in the UI flow.
 
 ---
 
@@ -121,10 +132,9 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
   - **Distribution**: Plasma protein binding and tissue distribution.
   - **Metabolism**: CYP450 metabolic stability.
   - **Excretion**: Renal & hepatic clearance route.
-
+    
 ---
 
----
 ## Application Preview
 
 <img width="1600" height="888" alt="image" src="https://github.com/user-attachments/assets/552cce28-8080-4e2a-93e8-ecf3d956d354" />
@@ -135,6 +145,8 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 <img width="1070" height="1338" alt="image" src="https://github.com/user-attachments/assets/d85ad3f8-0f3e-4bdc-90da-c2add4ae1c09" />
 <img width="1600" height="795" alt="image" src="https://github.com/user-attachments/assets/0607fc4e-921a-4fdf-96fe-1c0febe90a15" />
 <img width="1281" height="928" alt="image" src="https://github.com/user-attachments/assets/9f8900f6-c0be-4096-906c-f67ebabf9fad" />
+<img width="1600" height="816" alt="image" src="https://github.com/user-attachments/assets/63139efe-2904-44a6-b28f-cf416306190b" />
+
 
 ---
 
