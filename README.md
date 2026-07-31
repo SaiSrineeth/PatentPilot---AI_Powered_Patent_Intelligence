@@ -42,6 +42,7 @@ By taking a **SMILES chemical structure**, a **detailed molecule description**, 
 - **Integrated Drug Screening Dashboard**: Calculates Lipinski Rule of Five compliance, molecular descriptors (TPSA, LogP, HBD, HBA, Rotatable Bonds), and ADME pharmacokinetic predictions.
 - **Dark & Light Mode Support**: Modern glassmorphic dark and light user interface.
 - **Analysis History & Re-visit**: Full Supabase database storage with instant search, sorting, and fallback graph rendering.
+- **Download as PDF Reports**: Export comprehensive patent analysis reports, including AI insights and patent search results for documentation and sharing.
 
 ---
 
@@ -65,7 +66,7 @@ Users authenticate via Supabase Auth (with `@vnrvjiet.in` institutional domain v
 The system queries PubChem to fetch canonical SMILES, Molecular Formula, Molecular Weight, PubChem CID, and structural synonyms.
 
 ### 3. Patent Retrieval (SureChEMBL API)
-PatentPilot expands the search query using synonyms derived from PubChem, executing a multi-keyword query on SureChEMBL to pull candidates.
+PatentPilot expands the input query using PubChem-derived synonyms and executes a multi-keyword search on SureChEMBL, leveraging the Apache Solr search engine with the BM25 ranking algorithm to retrieve the most relevant patent candidates.
 
 ### 4. AI Semantic Ranking & Patentability Evaluation
 The Featherless AI LLM processes retrieved patent abstracts against candidate molecule details to:
@@ -115,7 +116,7 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 
 - **Molecular Descriptors**: Molecular Weight (g/mol), LogP (Lipophilicity), H-Bond Donors, H-Bond Acceptors, Rotatable Bonds, TPSA (Å²), Aromatic Rings.
 - **Lipinski Rule of Five**: Evaluates MW ≤ 500, LogP ≤ 5, HBD ≤ 5, HBA ≤ 10, returning an overall **PASS / FAIL** verdict.
-- **ADME Predictions**:
+- **ADME Predictions**: Used ADMETlab
   - **Absorption**: Gastrointestinal permeability prediction.
   - **Distribution**: Plasma protein binding and tissue distribution.
   - **Metabolism**: CYP450 metabolic stability.
@@ -148,9 +149,9 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 - **Lucide React** (Modern clean SVG icons)
 
 ### AI & Backend APIs
-- **Featherless AI SDK** (`llama-3.3-70b-versatile` / `llama-3.1-8b-instant`)
+- **Featherless AI SDK** (`Qwen/Qwen2.5-7B-Instruct`)
 - **PubChem PUG REST API**
-- **SureChEMBL REST API**
+- **SureChEMBL REST API** (`Apache Solr Searching Algorithm` / `BM 25 Ranking ALgorithm`)
 
 ### Database & Auth
 - **Supabase** (PostgreSQL database, Row Level Security, Supabase Auth)
@@ -180,10 +181,10 @@ PatentPilot/
 │   ├── chemistry.ts          # Pure JS Lipinski & ADME calculators
 │   └── supabase.ts           # Supabase client instantiation
 ├── services/
-│   ├── groq.ts               # Groq LLM client & ranking prompt handlers
+│   ├── groq.ts               # Featherless LLM client & ranking prompt handlers
 │   ├── history.ts            # Supabase database persistence service
 │   ├── pubchem.ts            # PubChem compound retrieval service
-│   ├── report.ts             # Groq report generator service
+│   ├── report.ts             # Featherless report generator service
 │   └── surechembl.ts         # SureChEMBL patent search service
 ├── types/
 │   └── analysis.ts           # TypeScript interfaces & data models
@@ -236,8 +237,8 @@ CREATE INDEX IF NOT EXISTS idx_patents_analysis_id ON patents(analysis_id);
 Create a `.env.local` file in the root directory:
 
 ```env
-# Groq API Credentials
-GROQ_API_KEY=gsk_your_groq_api_key_here
+# Featherless AI API Credentials
+FEATHERLESS_API_KEY=gsk_your_featherless_api_key_here
 
 # Supabase Database Credentials
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
