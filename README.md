@@ -127,7 +127,7 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 
 - **Molecular Descriptors**: Molecular Weight (g/mol), LogP (Lipophilicity), H-Bond Donors, H-Bond Acceptors, Rotatable Bonds, TPSA (Å²), Aromatic Rings.
 - **Lipinski Rule of Five**: Evaluates MW ≤ 500, LogP ≤ 5, HBD ≤ 5, HBA ≤ 10, returning an overall **PASS / FAIL** verdict.
-- **ADME Predictions**: Used ADMETlab
+- **ADME Predictions**: Used ADMETlab3.0 API for the following predictions:
   - **Absorption**: Gastrointestinal permeability prediction.
   - **Distribution**: Plasma protein binding and tissue distribution.
   - **Metabolism**: CYP450 metabolic stability.
@@ -164,6 +164,7 @@ Accessible via `/drug-screening`, this tool provides early-stage drug-likeness e
 - **Featherless AI SDK** (`Qwen/Qwen2.5-7B-Instruct`)
 - **PubChem PUG REST API**
 - **SureChEMBL REST API** (`Apache Solr Searching Algorithm` / `BM 25 Ranking ALgorithm`)
+- **ADMETlab3.0 API**
 
 ### Database & Auth
 - **Supabase** (PostgreSQL database, Row Level Security, Supabase Auth)
